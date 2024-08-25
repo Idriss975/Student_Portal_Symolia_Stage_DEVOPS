@@ -35,3 +35,5 @@ app.MapControllerRoute(
     pattern: "{controller=Students}/{action=Index}/{id?}");
 
 app.Run();
+
+public partial class Program { }
