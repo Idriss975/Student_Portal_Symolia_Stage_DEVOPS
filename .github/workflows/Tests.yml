@@ -1,0 +1,37 @@
+name: Tests on commits
+
+on:
+  workflow_call:
+
+jobs:
+    Unit_Tests:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout
+          uses: actions/Checkout@v4
+        
+        - name: Setup dotnet 8.0
+          uses: actions/setup-dotnet@v3
+          with:
+            dotnet-version: '8.0'
+        
+        - name: Pull mssql as Docker Image
+          run: docker pull mcr.microsoft.com/mssql/server:2022-latest
+
+        - name: Run mssql as Docker Container
+          run: |
+            docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest  
+            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
+
+        - name: Install dependencies
+          run: dotnet restore
+
+        - name: Migrate Models to  Database
+          run: dotnet run update
+
+        - name: Build
+          run: dotnet build
+
+        
+        - name: Test with the dotnet CLI
+          run: dotnet test
