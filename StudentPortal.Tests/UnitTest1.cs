@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using StudentPortal.Web.Controllers;
 
 using StudentPortal.Web.Data;
@@ -18,7 +20,31 @@ public class ControllerTests
     [Fact]
     public async Task PingTests()
     {
-        await using var application = new WebApplicationFactory<Program>();
+        await using var application = new WebApplicationFactory<Program>().WithWebHostBuilder(
+            builder => builder.ConfigureServices(
+                services=> {
+                    var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+                    if (descriptor != null)
+                    {
+                        services.Remove(descriptor);
+                    }
+
+                    services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase(databaseName: "StudentDatabasePingTests"));
+
+                    var serviceProvider = services.BuildServiceProvider();
+
+                    
+                    using (var scope = serviceProvider.CreateScope())
+                    {
+                        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                        db.students.Add(new Student {Id = 1, Email = "Test@Test", Name="Test test", Phone="0677", Subscribed=false});
+                        db.SaveChanges();
+                    }
+                }
+                
+            )
+        );
         using var client = application.CreateClient();
 
         var Response1 = await client.GetAsync("/Students");
