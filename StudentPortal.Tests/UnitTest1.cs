@@ -37,7 +37,7 @@ public class ControllerTests
     }
 
     [Fact]
-    public async Task ControllertoViewTest()
+    public void ControllertoViewTest()
     {
 
         var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(databaseName: "StudentDatabase").Options);

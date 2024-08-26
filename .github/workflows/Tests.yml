@@ -27,7 +27,7 @@ jobs:
           run: dotnet restore
 
         - name: Migrate Models to  Database
-          run: dotnet run update
+          run: dotnet ef database update
 
         - name: Build
           run: dotnet build
