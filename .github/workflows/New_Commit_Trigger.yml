@@ -1,0 +1,9 @@
+name: Tests for new push & Pull Request
+
+on:
+    [push, pull_request]
+
+    
+jobs:
+     Tests:
+        uses: ./.github/workflows/Tests.yml
