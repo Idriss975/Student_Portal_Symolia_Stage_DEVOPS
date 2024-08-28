@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/global.json
+**/*.user
+**/.vs
+**/.vscode
+**/.github
+**/StudentPortal.Tests/*
+**/Dockerfile*
+**/.dockerignore*
