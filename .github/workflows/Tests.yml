@@ -1,4 +1,4 @@
-name: Tests on commits
+name: UnitTests Job
 
 on:
   workflow_call:

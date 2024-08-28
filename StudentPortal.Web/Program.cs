@@ -2,13 +2,14 @@ using Microsoft.EntityFrameworkCore;
 using StudentPortal.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-string MSSQL_SA_PASSWORD = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD");
+string MSSQL_SA_PASSWORD = Environment.GetEnvironmentVariable("MSSQL_SA_PASSWORD") ?? "DefaultPassword";
+string MSSQL_SERVER = Environment.GetEnvironmentVariable("MSSQL_SERVER") ?? "localhost";
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 // This is what we add to inject our ApplicationDbContext into our application
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("StudentPortal")+"Password="+MSSQL_SA_PASSWORD+";"));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("Server="+MSSQL_SERVER+";"+builder.Configuration.GetConnectionString("StudentPortal")+"Password="+MSSQL_SA_PASSWORD+";"));
 
 var app = builder.Build();
 
