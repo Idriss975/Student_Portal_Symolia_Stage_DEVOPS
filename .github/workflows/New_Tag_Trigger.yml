@@ -1,0 +1,19 @@
+name: New Tag Trigger
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+
+permissions:
+  contents: write
+
+jobs:
+    Test:
+        uses: ./.github/workflows/Tests.yml
+
+    Build_and_Deploy:
+        needs: Test
+        uses: ./.github/workflows/Build_Test_Publish.yml
+        secrets: inherit
