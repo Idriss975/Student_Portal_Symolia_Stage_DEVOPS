@@ -34,8 +34,8 @@ jobs:
                   
       - name: Build the Published Docker version
         run: |
-          docker build -t Student_Portal .
-          docker save Student_Portal | gzip > ~/artifactdir/Student_Portal_Docker_Image.tar.gz
+          docker build -t student_portal .
+          docker save student_portal | gzip > ~/artifactdir/Student_Portal_Docker_Image.tar.gz
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -170,7 +170,7 @@ jobs:
       - name: Load Image and Run Container Student_Portal
         run: |
             docker load < ./Student_Portal_Docker_Image.tar.gz
-            docker run -e "MSSQL_SERVER=${MSSQL_SERVER}" -e "MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}" -p 80:80 Student_Portal
+            docker run -e "MSSQL_SERVER=${MSSQL_SERVER}" -e "MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}" -p 80:80 student_portal
         
       - name: Deploy Test 1
         run: curl --silent --request 'GET' --url 'http://localhost/Home'
@@ -231,7 +231,7 @@ jobs:
         run: docker load < ./Student_Portal_Docker_Image.tar.gz
 
       - name: Tag Image
-        run: docker image tag Student_Portal ${{ vars.DOCKER_USR }}/Student_Portal:latest
+        run: docker image tag student_portal ${{ vars.DOCKER_USR }}/student_portal:latest
 
       - name: Upload Tag
-        run: docker image push ${{ vars.DOCKER_USR }}/Student_Portal:latest
+        run: docker image push ${{ vars.DOCKER_USR }}/student_portal:latest
