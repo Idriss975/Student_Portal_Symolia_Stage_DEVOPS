@@ -27,10 +27,10 @@ jobs:
         run: mkdir -p ~/artifactdir/docker
 
       - name: Build the Published WINx64 version
-        run: dotnet publish -r win-x64 -o ~/artifactdir
+        run: dotnet publish -r win-x64 -o ~/artifactdir/win-x64
       
       - name: Build the Published Linux64 version
-        run: dotnet publish -r linux-x64 -o ~/artifactdir
+        run: dotnet publish -r linux-x64 -o ~/artifactdir/linux-x64
                   
       - name: Build the Published Docker version
         run: |
@@ -56,42 +56,8 @@ jobs:
       MSSQL_SERVER: ${{ secrets.MSSQL_SERVER }}
       MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
     steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.Build.outputs.arti_title }}
-
-      - name: Pull mssql Docker Image
-        run: docker pull mcr.microsoft.com/mssql/server:2022-latest
-  
-      - name: Run mssql as Docker Container
-        run: |
-            docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 1433:1433 --name sql1 --hostname sql1 mcr.microsoft.com/mssql/server:2022-latest
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; CREATE TABLE students (
-            Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-            Name NVARCHAR(MAX) NOT NULL,
-            Email NVARCHAR(MAX) NOT NULL,
-            Phone NVARCHAR(MAX) NOT NULL,
-            Subscribed BIT NOT NULL
-            );" -No
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; insert into students (Name, Email, Phone, Subscribed) values ('BERCHIL', 'Idriss', '0611223344', 1)" -No
-  
-      - name: run Student_Portal
-        run: |
-            cp ./win-x64/* .
-            ./StudentPortal.Web.exe
-
-      - name: Deploy Test 1
-        run: curl --silent --request 'GET' --url 'http://localhost/Home'
-      - name: Deploy Test 2
-        run: curl --silent --request 'GET' --url 'http://localhost/Home/Privacy'
-      - name: Deploy Test 3
-        run: curl --silent --request 'GET' --url 'http://localhost/Students'
-      - name: Deploy Test 4
-        run: curl --silent --request 'GET' --url 'http://localhost/Students/Add'
-      - name: Deploy Test 5
-        run: curl --silent --request 'GET' --url 'http://localhost/Students/Edit/1'
+      - name: Github actions doesn't support docker on windows
+        run: echo "TODO run on windows"
 
 
   Deployement_Test_Linux:
@@ -110,41 +76,42 @@ jobs:
         run: docker pull mcr.microsoft.com/mssql/server:2022-latest
   
       - name: Run mssql as Docker Container
-        run: |
-            docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 1433:1433 --name sql1 --hostname sql1 mcr.microsoft.com/mssql/server:2022-latest
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; CREATE TABLE students (
+        run: docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+          
+      - run: |
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; CREATE TABLE students (
             Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
             Name NVARCHAR(MAX) NOT NULL,
             Email NVARCHAR(MAX) NOT NULL,
             Phone NVARCHAR(MAX) NOT NULL,
             Subscribed BIT NOT NULL
             );" -No
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; insert into students (Name, Email, Phone, Subscribed) values ('BERCHIL', 'Idriss', '0611223344', 1)" -No
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; insert into students (Name, Email, Phone, Subscribed) values ('BERCHIL', 'Idriss', '0611223344', 1)" -No
 
       - name: run Student_Portal
         run: |
             cp -r ./linux-x64/* .
-            ./StudentPortal.Web
+            chmod +x ./StudentPortal.Web
+            ./StudentPortal.Web 2>&1 &
+            sleep 10
         
       - name: Deploy Test 1
-        run: curl --silent --request 'GET' --url 'http://localhost/Home'
+        run: curl --silent --request 'GET' --url 'http://localhost:5000/Home'
       - name: Deploy Test 2
-        run: curl --silent --request 'GET' --url 'http://localhost/Home/Privacy'
+        run: curl --silent --request 'GET' --url 'http://localhost:5000/Home/Privacy'
       - name: Deploy Test 3
-        run: curl --silent --request 'GET' --url 'http://localhost/Students'
+        run: curl --silent --request 'GET' --url 'http://localhost:5000/Students'
       - name: Deploy Test 4
-        run: curl --silent --request 'GET' --url 'http://localhost/Students/Add'
+        run: curl --silent --request 'GET' --url 'http://localhost:5000/Students/Add'
       - name: Deploy Test 5
-        run: curl --silent --request 'GET' --url 'http://localhost/Students/Edit/1'
+        run: curl --silent --request 'GET' --url 'http://localhost:5000/Students/Edit/1'
 
 
   Deployement_Test_Docker:
     runs-on: ubuntu-latest
     needs: Build
-    env:
-      MSSQL_SERVER: ${{ secrets.MSSQL_SERVER }}
-      MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -155,33 +122,39 @@ jobs:
         run: docker pull mcr.microsoft.com/mssql/server:2022-latest
   
       - name: Run mssql as Docker Container
-        run: |
-            docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 1433:1433 --name sql1 --hostname sql1 mcr.microsoft.com/mssql/server:2022-latest
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; CREATE TABLE students (
+        run: docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+          
+      - run: |
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "create database StudentPortalDb" -No
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; CREATE TABLE students (
             Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
             Name NVARCHAR(MAX) NOT NULL,
             Email NVARCHAR(MAX) NOT NULL,
             Phone NVARCHAR(MAX) NOT NULL,
             Subscribed BIT NOT NULL
             );" -No
-            docker exec sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; insert into students (Name, Email, Phone, Subscribed) values ('BERCHIL', 'Idriss', '0611223344', 1)" -No
-
-      - name: Load Image and Run Container Student_Portal
+            docker exec -d sql1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P ${{ secrets.MSSQL_SA_PASSWORD }} -Q "use StudentPortalDb; insert into students (Name, Email, Phone, Subscribed) values ('BERCHIL', 'Idriss', '0611223344', 1)" -No
+      - id: sql1_IP
+        run: echo "sql1_IP=`docker inspect --format '{{ .NetworkSettings.IPAddress }}' sql1`" >> $GITHUB_OUTPUT
+      - name: Load Image
+        run: docker load < ./Student_Portal_Docker_Image.tar.gz
+            
+      - name: Run Container Student_Portal
         run: |
-            docker load < ./Student_Portal_Docker_Image.tar.gz
-            docker run -e "MSSQL_SERVER=${MSSQL_SERVER}" -e "MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}" -p 80:80 student_portal
-        
+            docker run -e "MSSQL_SERVER=${{ steps.sql1_IP.outputs.sql1_IP }}" -e "MSSQL_SA_PASSWORD=${{ secrets.MSSQL_SA_PASSWORD }}" -p 8080:5000 -d student_portal
+            sleep 10
+
       - name: Deploy Test 1
-        run: curl --silent --request 'GET' --url 'http://localhost/Home'
+        run: curl --silent --request 'GET' --url 'http://localhost:8080/Home'
       - name: Deploy Test 2
-        run: curl --silent --request 'GET' --url 'http://localhost/Home/Privacy'
+        run: curl --silent --request 'GET' --url 'http://localhost:8080/Home/Privacy'
       - name: Deploy Test 3
-        run: curl --silent --request 'GET' --url 'http://localhost/Students'
+        run: curl --silent --request 'GET' --url 'http://localhost:8080/Students'
       - name: Deploy Test 4
-        run: curl --silent --request 'GET' --url 'http://localhost/Students/Add'
+        run: curl --silent --request 'GET' --url 'http://localhost:8080/Students/Add'
       - name: Deploy Test 5
-        run: curl --silent --request 'GET' --url 'http://localhost/Students/Edit/1'
+        run: curl --silent --request 'GET' --url 'http://localhost:8080/Students/Edit/1'
 
  
  

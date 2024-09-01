@@ -5,6 +5,6 @@
 **/.vs
 **/.vscode
 **/.github
-**/StudentPortal.Tests/*
 **/Dockerfile*
 **/.dockerignore*
+**/.github/*
