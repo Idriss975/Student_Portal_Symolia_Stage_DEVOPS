@@ -204,7 +204,7 @@ jobs:
         run: docker load < ./Student_Portal_Docker_Image.tar.gz
 
       - name: Tag Image
-        run: docker image tag student_portal ${{ vars.DOCKER_USR }}/student_portal:latest
+        run: docker image tag student_portal ${{ vars.DOCKER_USR }}/student_portal:${{ GITHUB.ref_name }}
 
       - name: Upload Tag
-        run: docker image push ${{ vars.DOCKER_USR }}/student_portal:latest
+        run: docker image push ${{ vars.DOCKER_USR }}/student_portal:${{ GITHUB.ref_name }}
