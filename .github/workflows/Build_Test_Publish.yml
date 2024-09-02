@@ -208,3 +208,9 @@ jobs:
 
       - name: Upload Tag
         run: docker image push ${{ vars.DOCKER_USR }}/student_portal:${{ GITHUB.ref_name }}
+
+      - name: Tag Image
+        run: docker image tag ${{ vars.DOCKER_USR }}/student_portal:${{ GITHUB.ref_name }} ${{ vars.DOCKER_USR }}/student_portal:latest
+
+      - name: Upload Tag
+        run: docker image push ${{ vars.DOCKER_USR }}/student_portal:latest
